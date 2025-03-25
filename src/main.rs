@@ -1,8 +1,8 @@
-use dcache::cli::{CLI, Command};
+use dcache::cli::{self, CLI};
+use dcache::server::Server;
 
-// #[tokio::main]
-// async fn main() {
-fn main() {
+#[tokio::main]
+async fn main() {
     // get caching layer
     // let cache = Cache::new();
     // get logger
@@ -12,17 +12,17 @@ fn main() {
 
     match cli.command() {
         // clear cache command
-        Command::ClearCache => {
+        cli::Command::ClearCache => {
             // cache.clear();
             println!("Clearing the cache..");
         }
         // start server
-        Command::StartServer(port, origin) => {
+        cli::Command::StartServer(port, origin) => {
             // init server
-            println!("PORT: {}, ORIGIN: {}", port, origin);
-            // let server = Server::new(port, origin);
+            let server = Server::new(port, origin);
             // // start the server
             // server.start(cache, logger);
+            let _ = server.start().await;
         }
     }
 }

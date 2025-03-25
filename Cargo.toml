@@ -6,5 +6,7 @@ edition = "2021"
 [dependencies]
 serde = "1.0.217"
 clap = { version = "4.5.27", features = ["cargo"] }
-hyper = "1.5.2"
-tokio = "1.43.0"
+http-body-util = "0.1"
+hyper = { version = "1.5.2", features = ["full"] }
+hyper-util = { version = "0.1", features = ["full"] }
+tokio = { version = "1", features = ["full"] }
