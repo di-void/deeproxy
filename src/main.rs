@@ -13,8 +13,8 @@ async fn main() {
     match cli.command() {
         // clear cache command
         cli::Command::ClearCache => {
-            // cache.clear();
             println!("Clearing the cache..");
+            // cache.clear();
         }
         // start server
         cli::Command::StartServer(port, origin) => {

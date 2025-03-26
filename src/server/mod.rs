@@ -1,7 +1,5 @@
-// https://docs.rs/hyper/latest/hyper/server/index.html
-// https://hyper.rs/guides/1/server/hello-world/
-// https://github.com/hyperium/hyper/blob/master/examples/hello.rs
-// https://github.com/hyperium/hyper/blob/master/examples/service_struct_impl.rs
+// https://docs.rs/http/latest/http/request/struct.Request.html
+// https://github.com/hyperium/hyper/tree/master/examples
 
 use std::convert::Infallible;
 use std::net::SocketAddr;
@@ -24,27 +22,21 @@ impl Server {
         Self { port, origin }
     }
 
-    pub async fn start(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        let addr = SocketAddr::from(([127, 0, 0, 1], self.port));
+    pub async fn start(&self) -> Result<(), Box<dyn std::error::Error>> {
+        let in_addr = SocketAddr::from(([127, 0, 0, 1], self.port));
 
-        println!("PORT: {}, ORIGIN: {}", self.port, self.origin);
+        let listener = TcpListener::bind(in_addr).await?;
 
-        let listener = TcpListener::bind(addr).await?;
+        println!("Listening on http://{}", in_addr);
+        println!("Proxying on {}", self.origin);
 
-        // We start a loop to continuously accept incoming connections
         loop {
             let (stream, _) = listener.accept().await?;
-
-            // Use an adapter to access something implementing `tokio::io` traits as if they implement
-            // `hyper::rt` IO traits.
             let io = TokioIo::new(stream);
 
-            // Spawn a tokio task to serve multiple connections concurrently
             tokio::task::spawn(async move {
-                // Finally, we bind the incoming connection to our `hello` service
                 if let Err(err) = http1::Builder::new()
-                    // `service_fn` converts our function in a `Service`
-                    .serve_connection(io, service_fn(serve))
+                    .serve_connection(io, service_fn(hello_service))
                     .await
                 {
                     eprintln!("Error serving connection: {:?}", err);
@@ -55,6 +47,10 @@ impl Server {
 }
 
 // hello
-async fn serve(req: Request<hyper::body::Incoming>) -> Result<Response<Full<Bytes>>, Infallible> {
+async fn hello_service(
+    req: Request<hyper::body::Incoming>,
+) -> Result<Response<Full<Bytes>>, Infallible> {
+    println!("URI: {}", req.uri());
+
     Ok(Response::new(Full::new(Bytes::from("Hello, World!"))))
 }
