@@ -3,6 +3,8 @@ use hyper::{self, body::Bytes, Request, Response, Uri};
 use hyper_util::rt::TokioIo;
 use tokio::net::TcpStream;
 
+// https://github.com/hyperium/hyper/blob/master/examples/client.rs
+
 pub async fn fetch(
     url: Uri,
 ) -> Result<Response<hyper::body::Incoming>, Box<dyn std::error::Error>> {

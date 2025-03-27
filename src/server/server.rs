@@ -1,12 +1,12 @@
 // https://docs.rs/http/latest/http/request/struct.Request.html
+// https://docs.rs/http/latest/http/response/struct.Response.html
+// https://docs.rs/hyper/latest/hyper/index.html
 // https://github.com/hyperium/hyper/tree/master/examples
 
 use std::convert::Infallible;
-use std::marker::{Send, Sync};
 use std::net::SocketAddr;
 
-use http_body_util::Full;
-use hyper::body::Bytes;
+// use http_body_util::Full;
 use hyper::server::conn::http1;
 use hyper::service::service_fn;
 use hyper::{self, Request, Response};
@@ -23,7 +23,7 @@ impl Server {
         Self { port, origin }
     }
 
-    pub async fn start(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn start(&self) -> Result<(), Box<dyn std::error::Error>> {
         let url = self.origin.parse::<hyper::Uri>().unwrap();
 
         // only support http (for now)
@@ -66,7 +66,7 @@ async fn proxy(
     let req_path = format!("{}{}", origin, trimmed);
 
     println!("\nPATH: {}", req_path);
-    // forward request to new address
+    // err?
     let res = client::fetch(req_path.parse::<hyper::Uri>().unwrap())
         .await
         .unwrap();
@@ -74,13 +74,4 @@ async fn proxy(
     // cache response by request uri
     // returned (cached?) response
     Ok(res)
-}
-
-// hello
-async fn _hello_service(
-    req: Request<hyper::body::Incoming>,
-) -> Result<Response<Full<Bytes>>, Infallible> {
-    println!("URI: {}", req.uri());
-
-    Ok(Response::new(Full::new(Bytes::from("Hello, World!"))))
 }
