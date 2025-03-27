@@ -8,7 +8,7 @@ use http_body_util::Full;
 use hyper::body::Bytes;
 use hyper::server::conn::http1;
 use hyper::service::service_fn;
-use hyper::{Request, Response};
+use hyper::{self, Request, Response};
 use hyper_util::rt::TokioIo;
 use tokio::net::TcpListener;
 
@@ -23,17 +23,24 @@ impl Server {
     }
 
     pub async fn start(&self) -> Result<(), Box<dyn std::error::Error>> {
-        let in_addr = SocketAddr::from(([127, 0, 0, 1], self.port));
+        let url = self.origin.parse::<hyper::Uri>().unwrap();
 
+        // only support http (for now)
+        if let Some("https") = url.scheme_str() {
+            println!("Only http origins are supported");
+            return Ok(());
+        }
+
+        let in_addr = SocketAddr::from(([127, 0, 0, 1], self.port));
         let listener = TcpListener::bind(in_addr).await?;
 
         println!("Listening on http://{}", in_addr);
-        println!("Proxying on {}", self.origin);
+        println!("Proxying on {}", &url);
 
         loop {
             let (stream, _) = listener.accept().await?;
             let io = TokioIo::new(stream);
-            let origin = self.origin.clone();
+            let origin = url.clone();
 
             tokio::task::spawn(async move {
                 if let Err(err) = http1::Builder::new()
@@ -49,9 +56,11 @@ impl Server {
 
 async fn proxy(
     req: Request<hyper::body::Incoming>,
-    origin: String,
+    origin: hyper::Uri,
 ) -> Result<Response<String>, Infallible> {
-    let req_path = format!("{}{}", origin, req.uri());
+    let uri = &req.uri().to_string();
+    let trimmed = uri.strip_prefix("/").unwrap_or(uri);
+    let req_path = format!("{}{}", origin, trimmed);
 
     println!("PATH: {}", req_path);
     // forward request to new address
