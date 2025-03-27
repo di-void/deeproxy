@@ -2,6 +2,7 @@
 // https://github.com/hyperium/hyper/tree/master/examples
 
 use std::convert::Infallible;
+use std::marker::{Send, Sync};
 use std::net::SocketAddr;
 
 use http_body_util::Full;
@@ -22,7 +23,7 @@ impl Server {
         Self { port, origin }
     }
 
-    pub async fn start(&self) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn start(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let url = self.origin.parse::<hyper::Uri>().unwrap();
 
         // only support http (for now)
@@ -57,16 +58,22 @@ impl Server {
 async fn proxy(
     req: Request<hyper::body::Incoming>,
     origin: hyper::Uri,
-) -> Result<Response<String>, Infallible> {
+) -> Result<Response<hyper::body::Incoming>, Infallible> {
+    use super::client;
+
     let uri = &req.uri().to_string();
     let trimmed = uri.strip_prefix("/").unwrap_or(uri);
     let req_path = format!("{}{}", origin, trimmed);
 
-    println!("PATH: {}", req_path);
+    println!("\nPATH: {}", req_path);
     // forward request to new address
+    let res = client::fetch(req_path.parse::<hyper::Uri>().unwrap())
+        .await
+        .unwrap();
+
     // cache response by request uri
     // returned (cached?) response
-    Ok(Response::new(String::from("Hello proxy")))
+    Ok(res)
 }
 
 // hello
