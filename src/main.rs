@@ -1,5 +1,5 @@
-use dcache::cli::{self, CLI};
-use dcache::server::Server;
+use deeproxy::server::Server;
+use deeproxy::cli::{self, CLI};
 
 #[tokio::main]
 async fn main() {
