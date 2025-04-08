@@ -7,10 +7,14 @@ use std::convert::Infallible;
 use std::net::SocketAddr;
 
 // use http_body_util::Full;
+use crate::cache::types::CachedResponse;
+use crate::cache::Cache;
 use hyper::server::conn::http1;
 use hyper::service::service_fn;
 use hyper::{self, Request, Response};
 use hyper_util::rt::TokioIo;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use tokio::net::TcpListener;
 
 pub struct Server {
@@ -23,7 +27,7 @@ impl Server {
         Self { port, origin }
     }
 
-    pub async fn start(&self) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn start(&self, _cache: Cache) -> Result<(), Box<dyn std::error::Error>> {
         let url = self.origin.parse::<hyper::Uri>().unwrap();
 
         // only support http (for now)

@@ -1,28 +1,27 @@
-use deeproxy::server::Server;
-use deeproxy::cli::{self, CLI};
+use deeproxy::{
+    cache::Cache,
+    cli::{self, CLI},
+    server::Server,
+};
 
 #[tokio::main]
 async fn main() {
-    // get caching layer
-    // let cache = Cache::new();
+    let cache = Cache::new();
     // get logger
     // let logger = Logger::new();
-    // init cli
     let cli = CLI::init();
 
     match cli.command() {
-        // clear cache command
         cli::Command::ClearCache => {
             println!("Clearing the cache..");
-            // cache.clear();
+            cache.clear().expect("Error clearning cache!");
         }
-        // start server
         cli::Command::StartServer(port, origin) => {
             // init server
             let server = Server::new(port, origin);
             // // start the server
             // server.start(cache, logger);
-            let _ = server.start().await;
+            let _ = server.start(cache).await;
         }
     }
 }
