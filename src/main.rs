@@ -15,6 +15,7 @@ async fn main() {
         cli::Command::ClearCache => {
             println!("Clearing the cache..");
             cache.clear().await.expect("Error clearning cache!");
+            println!("ALL CLEAR!");
         }
         cli::Command::StartServer(port, origin) => {
             // init server

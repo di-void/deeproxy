@@ -48,11 +48,14 @@ impl Cache {
         }
     }
 
-    pub async fn set(&self, key: &str) -> io::Result<Option<CachedResponse>> {
+    pub async fn set(&self, key: &str, val: CachedResponse) -> io::Result<Option<CachedResponse>> {
         let hashed_key = hash_url(key);
-        let _file_path = self.path.join(hashed_key);
-        // fs write
-        Ok(None)
+        let file_path = self.path.join(hashed_key);
+        let serialized = serde_json::to_string(&val).unwrap();
+
+        let _ = fs::write(file_path, serialized).await;
+
+        Ok(Some(val))
     }
 
     pub async fn clear(&self) -> io::Result<()> {

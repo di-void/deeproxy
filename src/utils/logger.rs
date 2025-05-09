@@ -1,4 +1,4 @@
 // consider crate: tracing
-trait Logger {
+trait _Logger {
     fn log(message: &str);
 }
