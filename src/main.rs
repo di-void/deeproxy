@@ -6,7 +6,7 @@ use deeproxy::{
 
 #[tokio::main]
 async fn main() {
-    let cache = Cache::new();
+    let cache = Cache::new().await;
     // get logger
     // let logger = Logger::new();
     let cli = CLI::init();
@@ -14,7 +14,7 @@ async fn main() {
     match cli.command() {
         cli::Command::ClearCache => {
             println!("Clearing the cache..");
-            cache.clear().expect("Error clearning cache!");
+            cache.clear().await.expect("Error clearning cache!");
         }
         cli::Command::StartServer(port, origin) => {
             // init server

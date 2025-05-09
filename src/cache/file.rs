@@ -1,38 +1,63 @@
 use crate::utils::hash_url;
-use std::{fs, io, path::PathBuf};
+use serde::{Deserialize, Serialize};
+use serde_json;
+use std::collections::HashMap;
+use std::{io, io::ErrorKind, path::PathBuf};
+use tokio::fs;
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct CachedResponse {
+    pub status: u16,
+    pub headers: HashMap<String, String>,
+    pub body: Vec<u8>,
+}
 
 // https://serde.rs/
 // https://docs.rs/serde/latest/serde/
+// https://github.com/serde-rs/json
 
 pub struct Cache {
     path: PathBuf,
 }
 
 impl Cache {
-    pub fn new() -> Self {
+    pub async fn new() -> Self {
         let cache_dir = PathBuf::from("cache");
-        fs::create_dir_all(&cache_dir).expect("Couldn't create cache directory");
+
+        fs::create_dir_all(&cache_dir)
+            .await
+            .expect("Couldn't create cache directory");
 
         Cache { path: cache_dir }
     }
 
-    pub fn get(&self, key: &str) -> io::Result<()> {
+    pub async fn get(&self, key: &str) -> io::Result<Option<CachedResponse>> {
         let hashed_key = hash_url(key);
-        let _file_path = self.path.join(hashed_key);
-        // fs read
-        Ok(())
+        let file_path = self.path.join(hashed_key);
+        let res = fs::read(file_path).await;
+
+        match res {
+            Ok(contents) => {
+                // serialize to cached response type
+                let res = String::from_utf8(contents).unwrap();
+                let serialized = serde_json::from_str::<CachedResponse>(&res).unwrap();
+                Ok(Some(serialized))
+            }
+            Err(e) if e.kind() == ErrorKind::NotFound => Ok(None),
+            Err(e) => Err(e),
+        }
     }
 
-    pub fn set(&self, key: &str) -> io::Result<()> {
+    pub async fn set(&self, key: &str) -> io::Result<Option<CachedResponse>> {
         let hashed_key = hash_url(key);
         let _file_path = self.path.join(hashed_key);
         // fs write
-        Ok(())
+        Ok(None)
     }
 
-    pub fn clear(&self) -> io::Result<()> {
-        fs::remove_dir_all(&self.path)?;
-        fs::create_dir_all(&self.path)?;
+    pub async fn clear(&self) -> io::Result<()> {
+        fs::remove_dir_all(&self.path).await?;
+        fs::create_dir_all(&self.path).await?;
         Ok(())
     }
 }
