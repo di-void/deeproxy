@@ -1,6 +1,3 @@
-mod logger;
-// pub use logger::*;
-
 use sha2::{Digest, Sha256};
 
 pub fn hash_url(url: &str) -> String {

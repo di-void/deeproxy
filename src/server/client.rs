@@ -32,7 +32,7 @@ pub async fn fetch(
     let res = sender.send_request(req).await?;
 
     println!("Response: {}", res.status());
-    println!("Headers: {:#?}\n", res.headers());
+    // println!("Headers: {:#?}\n", res.headers());
 
     Ok(res)
 }

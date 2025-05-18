@@ -38,7 +38,6 @@ impl Cache {
 
         match res {
             Ok(contents) => {
-                // serialize to cached response type
                 let res = String::from_utf8(contents).unwrap();
                 let serialized = serde_json::from_str::<CachedResponse>(&res).unwrap();
                 Ok(Some(serialized))

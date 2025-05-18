@@ -26,7 +26,7 @@ impl Server {
     pub async fn start(&self, cache: Cache) -> Result<(), Box<dyn std::error::Error>> {
         let url = self.origin.parse::<hyper::Uri>().unwrap();
 
-        // only support http (for now)
+        // only support http
         if let Some("https") = url.scheme_str() {
             println!("Only http origins are supported");
             return Ok(());
@@ -73,18 +73,21 @@ async fn proxy(
     let trimmed = uri.strip_prefix("/").unwrap_or(uri);
     let req_path = format!("{}{}", origin, trimmed);
 
-    println!("\nPATH: {}", req_path);
+    println!("\nRequest URI: {}", req_path);
     // err?
     let cache = cache_lock.read().await;
 
     match cache.get(&req_path).await {
         Ok(Some(res)) => {
-            println!("Cache HIT!!");
-            // convert cached response to http response type
+            println!("Cache HIT!");
+
             let mut builder = Response::builder();
+
             for (key, val) in res.headers.iter() {
                 builder = builder.header(key, val);
             }
+
+            builder = builder.header("X-Cache", "HIT");
 
             let response = builder
                 .status(res.status)
@@ -100,7 +103,6 @@ async fn proxy(
                 .await
                 .unwrap();
 
-            // let (parts, body) = res.into_parts();
             let status = res.status().as_u16();
             let hdrs = res.headers();
             let mut headers = HashMap::new();
@@ -120,9 +122,12 @@ async fn proxy(
 
             let res = cache.set(&req_path, serialized).await.unwrap().unwrap();
             let mut builder = Response::builder();
+
             for (key, val) in res.headers.iter() {
                 builder = builder.header(key, val);
             }
+
+            builder = builder.header("X-Cache", "MISS");
 
             let response = builder
                 .status(res.status)
@@ -130,9 +135,6 @@ async fn proxy(
                 .unwrap();
 
             Ok(response)
-            // serialize response
-            // cache response by request uri
-            // returned (cached?) response
         }
         Err(_e) => {
             eprintln!("an error occurred");
@@ -150,6 +152,7 @@ async fn proxy(
 // https://docs.rs/http/latest/http/request/struct.Request.html
 // https://docs.rs/http/latest/http/response/struct.Response.html
 // https://docs.rs/hyper/latest/hyper/index.html
+// https://docs.rs/hyper/latest/hyper/body/struct.Incoming.html
 // https://github.com/hyperium/hyper/tree/master/examples
 // https://docs.rs/http-body-util/0.1.3/http_body_util/
 // https://docs.rs/hyper/latest/hyper/body/index.html

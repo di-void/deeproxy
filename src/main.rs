@@ -7,8 +7,6 @@ use deeproxy::{
 #[tokio::main]
 async fn main() {
     let cache = Cache::new().await;
-    // get logger
-    // let logger = Logger::new();
     let cli = CLI::init();
 
     match cli.command() {
@@ -18,10 +16,7 @@ async fn main() {
             println!("ALL CLEAR!");
         }
         cli::Command::StartServer(port, origin) => {
-            // init server
             let server = Server::new(port, origin);
-            // // start the server
-            // server.start(cache, logger);
             let _ = server.start(cache).await;
         }
     }
