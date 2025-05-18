@@ -83,7 +83,7 @@ async fn proxy(
 
             let mut builder = Response::builder();
 
-            for (key, val) in res.headers.iter() {
+            for (key, val) in res.headers {
                 builder = builder.header(key, val);
             }
 
@@ -105,13 +105,11 @@ async fn proxy(
 
             let status = res.status().as_u16();
             let hdrs = res.headers();
-            let mut headers = HashMap::new();
+            let headers = hdrs
+                .iter()
+                .map(|(k, v)| (k.as_str().to_string(), v.to_str().unwrap_or("").to_string()))
+                .collect::<HashMap<String, String>>();
 
-            for (key, val) in hdrs.iter() {
-                let name = String::from(key.to_owned().as_str());
-                let val = String::from(val.to_str().unwrap());
-                headers.insert(name, val);
-            }
             let body = res.into_body().collect().await.unwrap().to_bytes();
 
             let serialized = CachedResponse {
